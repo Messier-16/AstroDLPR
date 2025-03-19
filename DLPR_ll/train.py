@@ -208,14 +208,16 @@ if __name__ == "__main__":
 
     if not os.path.exists(ckp_dir):
         os.makedirs(ckp_dir)
+
+    batch_size = 384
     
     #transform_train = build_transforms("p64")
     #transform_eval = build_transforms("p64_centercrop")
-    train_data = AstroDataset("/content/train_fits", 64, 25000)
-    train_dataloader = data.DataLoader(train_data, batch_size=64, shuffle=True, num_workers=1, prefetch_factor=2, pin_memory=True)
+    train_data = AstroDataset("/content/train_fits", batch_size, 100000)
+    train_dataloader = data.DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=1, prefetch_factor=2, pin_memory=True)
     
-    eval_data = AstroDataset("/content/val_fits", 64, 1000)
-    eval_dataloader = data.DataLoader(eval_data, batch_size=64, shuffle=False, num_workers=1, prefetch_factor=2, pin_memory=True)
+    eval_data = AstroDataset("/content/val_fits", batch_size, 10000)
+    eval_dataloader = data.DataLoader(eval_data, batch_size=batch_size, shuffle=False, num_workers=1, prefetch_factor=2, pin_memory=True)
     
     train(train_dataloader, eval_dataloader, epochs, ckp_dir, log_dir, resume)
     
