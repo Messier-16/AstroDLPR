@@ -4,12 +4,13 @@ import torch.optim as optim
 import torch.utils.data as data
 from torch.utils.tensorboard import SummaryWriter
 
-from utils.data.datasets import ImageDataset
+from utils.data.datasets import ImageDataset, AstroDataset
 from utils.data.transform import build_transforms
 
 import os
 import numpy as np
 import math
+from tqdm import tqdm
 
 from ll_model import LosslessCompressor, RateDistortion
 
@@ -52,7 +53,7 @@ def train_one_epoch(model, criterion, train_dataloader, optimizer, aux_optimizer
     device = next(model.parameters()).device
     
     train_size = 0
-    for x in train_dataloader:
+    for x in tqdm(train_dataloader):
         x = x.to(device).contiguous()
         
         optimizer.zero_grad()
@@ -171,7 +172,7 @@ def train(train_dataloader, eval_dataloader, epochs, ckp_dir, log_dir, resume=Fa
         start_epoch = 0
         train_step = 0
 
-    for epoch in range(start_epoch, epochs):
+    for epoch in tqdm(range(start_epoch, epochs)):
         # train
         train_step = train_one_epoch(ll_module, rd_criterion, train_dataloader, optimizer, aux_optimizer, train_step, tb_writer, clip_max_norm=1.0)
         # eval
@@ -208,13 +209,13 @@ if __name__ == "__main__":
     if not os.path.exists(ckp_dir):
         os.makedirs(ckp_dir)
     
-    transform_train = build_transforms("p64")
-    transform_eval = build_transforms("p64_centercrop")
-    train_data= ImageDataset("../Datasets/DIV2K_train_p128", transform = transform_train)
-    train_dataloader = data.DataLoader(train_data, batch_size=64, shuffle=True, num_workers=8, prefetch_factor=2, pin_memory=True)
+    #transform_train = build_transforms("p64")
+    #transform_eval = build_transforms("p64_centercrop")
+    train_data = AstroDataset("/content/train_fits", 64, 25000)
+    train_dataloader = data.DataLoader(train_data, batch_size=64, shuffle=True, num_workers=1, prefetch_factor=2, pin_memory=True)
     
-    eval_data= ImageDataset("../Datasets/DIV2K_valid_p128", transform = transform_eval)
-    eval_dataloader = data.DataLoader(eval_data, batch_size=64, shuffle=False, num_workers=8, prefetch_factor=2, pin_memory=True)
+    eval_data = AstroDataset("/content/val_fits", 64, 1000)
+    eval_dataloader = data.DataLoader(eval_data, batch_size=64, shuffle=False, num_workers=1, prefetch_factor=2, pin_memory=True)
     
     train(train_dataloader, eval_dataloader, epochs, ckp_dir, log_dir, resume)
     
